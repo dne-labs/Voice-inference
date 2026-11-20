@@ -1,0 +1,190 @@
+{
+  "backend": "vllm-omni 0.30.0",
+  "model": "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
+  "voice": "ryan",
+  "prompt": "Hello from VoiceForge. This is a streaming speech benchmark.",
+  "rounds_per_concurrency": 4,
+  "results": [
+    {
+      "concurrency": 1,
+      "completed": 4,
+      "failed": 0,
+      "p95_first_audio_ms": 277.92774899990036,
+      "p95_total_ms": 9419.045280999853,
+      "audio_seconds_per_second": 0.9144764490560429,
+      "requests_per_second": 0.11528209873316707,
+      "bursts": [
+        {
+          "wall_seconds": 9.419607464999899,
+          "requests": [
+            {
+              "first_audio_ms": 252.28072800018708,
+              "total_ms": 9419.045280999853,
+              "audio_seconds": 8.440708333333333,
+              "chunks": 9
+            }
+          ]
+        },
+        {
+          "wall_seconds": 7.4097146949998205,
+          "requests": [
+            {
+              "first_audio_ms": 277.92774899990036,
+              "total_ms": 7409.413291999954,
+              "audio_seconds": 7.158666666666667,
+              "chunks": 8
+            }
+          ]
+        },
+        {
+          "wall_seconds": 8.928224473000228,
+          "requests": [
+            {
+              "first_audio_ms": 272.23443599996244,
+              "total_ms": 8927.625766000347,
+              "audio_seconds": 8.012,
+              "chunks": 8
+            }
+          ]
+        },
+        {
+          "wall_seconds": 8.939947982000376,
+          "requests": [
+            {
+              "first_audio_ms": 269.12319399980333,
+              "total_ms": 8939.65259200013,
+              "audio_seconds": 8.118666666666666,
+              "chunks": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "concurrency": 2,
+      "completed": 6,
+      "failed": 2,
+      "p95_first_audio_ms": 3075.026605999483,
+      "p95_total_ms": 59471.39118500036,
+      "audio_seconds_per_second": 0.21929832925256335,
+      "requests_per_second": 0.029601962729515686,
+      "bursts": [
+        {
+          "wall_seconds": 51.93654418300048,
+          "requests": [
+            {
+              "error": "Stream ended without a valid done event"
+            },
+            {
+              "first_audio_ms": 3075.026605999483,
+              "total_ms": 48666.80773200005,
+              "audio_seconds": 6.732,
+              "chunks": 7
+            }
+          ]
+        },
+        {
+          "wall_seconds": 60.04978164899967,
+          "requests": [
+            {
+              "error": "Stream ended without a valid done event"
+            },
+            {
+              "first_audio_ms": 1054.5903009997346,
+              "total_ms": 59471.39118500036,
+              "audio_seconds": 8.760708333333334,
+              "chunks": 9
+            }
+          ]
+        },
+        {
+          "wall_seconds": 40.46789199700015,
+          "requests": [
+            {
+              "first_audio_ms": 991.8382779997046,
+              "total_ms": 40467.20700399965,
+              "audio_seconds": 7.798666666666667,
+              "chunks": 8
+            },
+            {
+              "first_audio_ms": 270.5952079995768,
+              "total_ms": 38341.53503200014,
+              "audio_seconds": 5.665333333333334,
+              "chunks": 7
+            }
+          ]
+        },
+        {
+          "wall_seconds": 50.23504486699949,
+          "requests": [
+            {
+              "first_audio_ms": 991.7896160004602,
+              "total_ms": 50234.481249000055,
+              "audio_seconds": 8.227375,
+              "chunks": 9
+            },
+            {
+              "first_audio_ms": 253.07619599971076,
+              "total_ms": 48919.173195999974,
+              "audio_seconds": 7.265333333333333,
+              "chunks": 8
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "setup": "Tesla T4 · Qwen3-TTS 0.6B · vLLM-Omni 0.30.0 · VoiceForge HTTP streaming.",
+  "notes": "One prompt, four bursts per level. One concurrent request completed 4/4. Two concurrent requests completed 6/8. Both incomplete streams closed without a done event, so concurrency 4 was skipped. Latency charts use completed requests. Throughput includes the wall time of failed bursts. One server trace delivered first audio in 248 ms and took 48.9 s to finish. The cause of the incomplete streams is unknown.",
+  "metrics": [
+    {
+      "name": "Median first audio",
+      "unit": " ms",
+      "better": "lower",
+      "before": 270.6788149998829,
+      "after": 991.8139470000824
+    },
+    {
+      "name": "Median completion",
+      "unit": " ms",
+      "better": "lower",
+      "before": 8933.639179000238,
+      "after": 48792.99046400002
+    },
+    {
+      "name": "Slowest first audio",
+      "unit": " ms",
+      "better": "lower",
+      "before": 277.92774899990036,
+      "after": 3075.026605999483
+    },
+    {
+      "name": "Slowest completion",
+      "unit": " ms",
+      "better": "lower",
+      "before": 9419.045280999853,
+      "after": 59471.39118500036
+    },
+    {
+      "name": "Completed requests",
+      "unit": " %",
+      "better": "higher",
+      "before": 100,
+      "after": 75
+    },
+    {
+      "name": "Audio throughput",
+      "unit": " audio s/s",
+      "better": "higher",
+      "before": 0.9144764490560429,
+      "after": 0.21929832925256335
+    },
+    {
+      "name": "Request throughput",
+      "unit": " req/s",
+      "better": "higher",
+      "before": 0.11528209873316707,
+      "after": 0.029601962729515686
+    }
+  ]
+}
