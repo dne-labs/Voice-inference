@@ -43,6 +43,7 @@ const otherPhases = [
   ["chunking", "Adaptive chunking", "Time to first playable payload and gaps between chunks."],
   ["chunkingrepeat", "Chunking repeat", "First audio across three prompts in a fresh GPU session."],
   ["chunkingload", "Chunking under load", "Compare paragraph and sentence streaming at 1, 2, and 4 concurrent requests."],
+  ["vllmstreaming", "vLLM streaming", "T4 first-audio latency, throughput, and completion under concurrent load."],
   ["observability", "Reproducibility", "Variation across repeated trials and cost per audio minute."],
 ];
 
@@ -310,6 +311,6 @@ export default function Benchmarks() {
       : id === "streaming" ? <Streaming report={current.data} />
       : id === "queueing" ? <Scheduling report={current.data} />
       : id === "caching" ? <Conditioning report={current.data} />
-      : <Comparison report={current.data} labels={id.startsWith("chunking") ? ["Paragraph", "Sentence"] : undefined} />)}
+      : <Comparison report={current.data} labels={id === "vllmstreaming" ? ["1 concurrent", "2 concurrent"] : id.startsWith("chunking") ? ["Paragraph", "Sentence"] : undefined} />)}
   </section>;
 }
