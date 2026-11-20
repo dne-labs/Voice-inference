@@ -7,6 +7,7 @@ import express from "express";
 const app = express();
 const worker = process.env.INFERENCE_URL || "http://127.0.0.1:8000";
 const port = Number(process.env.PORT || 3001);
+const host = process.env.HOST || "127.0.0.1";
 const omniTimeoutMs = Number(process.env.VLLM_OMNI_TIMEOUT_MS ?? 60_000);
 if (!Number.isSafeInteger(omniTimeoutMs) || omniTimeoutMs < 1 || omniTimeoutMs > 600_000) {
   throw new Error("VLLM_OMNI_TIMEOUT_MS must be an integer between 1 and 600000.");
@@ -22,6 +23,8 @@ app.use(express.json({ limit: "16kb" }));
 function fail(request, response, status, message) {
   return response.status(status).json({ error: message, request_id: request.id });
 }
+
+app.get("/health", (request, response) => response.json({ status: "ready" }));
 
 app.post(["/v1/speech", "/v1/speech/stream"], async (request, response) => {
   const { text, backend = "kokoro" } = request.body ?? {};
@@ -120,4 +123,4 @@ app.use((error, request, response, next) => {
   return fail(request, response, 500, "Unexpected gateway error.");
 });
 
-app.listen(port, "127.0.0.1", () => console.log(`VoiceForge listening on http://127.0.0.1:${port}`));
+app.listen(port, host, () => console.log(`VoiceForge listening on http://${host}:${port}`));

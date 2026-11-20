@@ -28,12 +28,12 @@ MAX_TEXT_LENGTH = 2_000
 class InferenceServer(ThreadingHTTPServer):
     def __init__(
         self, port: int, adapter: KokoroAdapter, scheduler: Scheduler | None = None, *,
-        memory_check: Callable[[], bool] | None = None,
+        host: str = "127.0.0.1", memory_check: Callable[[], bool] | None = None,
     ):
         self.adapter = adapter
         self.memory_check = memory_check
         self.scheduler = scheduler if scheduler is not None else Scheduler()
-        super().__init__(("127.0.0.1", port), InferenceHandler)
+        super().__init__((host, port), InferenceHandler)
 
 
 class InferenceHandler(BaseHTTPRequestHandler):
@@ -170,6 +170,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--port", type=int, default=os.getenv("INFERENCE_PORT", "8000"))
+    parser.add_argument("--host", default=os.getenv("INFERENCE_HOST", "127.0.0.1"))
     parser.add_argument("--queue-limit", type=int, default=4, help="maximum requests waiting for inference")
     parser.add_argument("--queue-timeout", type=float, default=15, help="maximum seconds a request may wait")
     parser.add_argument("--queue-policy", choices=("fifo", "shortest"), default="fifo")
@@ -201,8 +202,8 @@ def main() -> None:
             free, _ = torch.cuda.mem_get_info()
             return free >= args.cuda_min_free_mib * 1024 * 1024
 
-    with InferenceServer(args.port, adapter, scheduler, memory_check=memory_check) as server:
-        print(f"Inference worker ready on http://127.0.0.1:{server.server_port}", flush=True)
+    with InferenceServer(args.port, adapter, scheduler, host=args.host, memory_check=memory_check) as server:
+        print(f"Inference worker ready on http://{args.host}:{server.server_port}", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:
