@@ -1,0 +1,59 @@
+name: voiceforge
+
+services:
+  worker:
+    build:
+      context: .
+      target: worker
+      args:
+        TORCH_VERSION: ${TORCH_VERSION:-2.8.0}
+        TORCH_VARIANT: ${TORCH_VARIANT:-cpu}
+        TORCH_INDEX: ${TORCH_INDEX:-https://download.pytorch.org/whl/cpu}
+    image: voiceforge-worker:local
+    environment:
+      HF_HOME: /home/voiceforge/.cache/huggingface
+      INFERENCE_HOST: 0.0.0.0
+      INFERENCE_PORT: "8000"
+    volumes:
+      # Kokoro-82M weights and the default voice are downloaded on first use.
+      - hf-cache:/home/voiceforge/.cache/huggingface
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  gateway:
+    build:
+      context: .
+      target: gateway
+    image: voiceforge-gateway:local
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3001"
+      INFERENCE_URL: http://worker:8000
+      VLLM_OMNI_URL: ${VLLM_OMNI_URL:-}
+      VLLM_OMNI_TIMEOUT_MS: ${VLLM_OMNI_TIMEOUT_MS:-60000}
+    extra_hosts:
+      # Lets an optional vLLM-Omni server on the host be reached from the container.
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:3001:3001"
+    depends_on:
+      worker:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        # Address of the gateway as seen from inside the web container. It is
+        # baked into the Next.js build, so rebuild after changing it.
+        VOICEFORGE_API_URL: ${WEB_GATEWAY_URL:-http://gateway:3001}
+    image: voiceforge-web:local
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      gateway:
+        condition: service_started
+
+volumes:
+  hf-cache:
