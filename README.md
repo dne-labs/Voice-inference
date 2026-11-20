@@ -15,6 +15,68 @@ cp .env.example .env
 ```
 
 The environment template documents local ports for the planned gateway and worker.
+
+## Run with Docker
+
+Docker Compose builds and runs the worker, gateway, and web app together. This
+requires Docker Engine with Compose v2 and enough disk space for the PyTorch
+image and the Kokoro weights.
+
+From the repository root:
+
+```sh
+docker compose up --build
+```
+
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Compose publishes each
+service on loopback only:
+
+| Service | Container port | Host address |
+|---|---:|---|
+| Web | 3000 | `http://127.0.0.1:3000` |
+| Gateway | 3001 | `http://127.0.0.1:3001` |
+| Worker | 8000 | `http://127.0.0.1:8000` |
+
+The first build creates a Python 3.12 worker image with eSpeak NG, PyTorch
+2.8.0 CPU, and Kokoro 0.9.4. Kokoro-82M weights download when the worker starts,
+and the default voice pack downloads on first synthesis, both into the
+`voiceforge_hf-cache` volume. Later starts reuse the cache, so leave extra time
+for the first `docker compose up`. `docker compose down` keeps the cache; add
+`-v` to delete it.
+
+`docker-compose.gpu.yml` switches the worker to the CUDA 12.6 PyTorch wheel and
+requests all GPUs. It requires an NVIDIA driver and the NVIDIA Container
+Toolkit:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+```
+
+The web image bakes the gateway address into the Next.js build. The default is
+`http://gateway:3001`; set `WEB_GATEWAY_URL` and rebuild the `web` service to use
+another address. The gateway receives `INFERENCE_URL=http://worker:8000`.
+
+To opt into Qwen speech through vLLM-Omni, set `VLLM_OMNI_URL` when starting
+Compose. The gateway container can reach a server on the host through
+`host.docker.internal`:
+
+```sh
+VLLM_OMNI_URL=http://host.docker.internal:8001 docker compose up
+```
+
+Useful commands:
+
+```sh
+docker compose ps                 # container and health status
+docker compose logs -f worker     # follow worker logs
+docker compose restart gateway    # restart one service
+docker compose down               # stop the stack, keep the model cache
+docker compose down -v            # stop and remove the model cache
+```
+
+The native-process instructions below remain available for development without
+Docker.
+
 ## Generate a WAV with Kokoro
 
 These smoke-test commands target x86-64 Linux and Python 3.12. Install
@@ -91,7 +153,9 @@ synthesis at a time. A bounded FIFO queue accepts four additional requests by
 default. A full queue returns HTTP 503 with `Retry-After: 1`. Requests that
 wait longer than 15 seconds receive HTTP 504.
 The worker runs on port 8000, the gateway on 3001, and Next.js on 3000.
-All three bind to loopback. To use a different gateway address, set
+The native processes bind to loopback. In Docker, the worker and gateway bind to
+`0.0.0.0` inside the container network while Compose publishes them on loopback.
+To use a different gateway address, set
 `VOICEFORGE_API_URL` before starting Next.js. If building for production, set
 it before `npm run build` as well. The gateway uses `INFERENCE_URL` to locate
 the worker.

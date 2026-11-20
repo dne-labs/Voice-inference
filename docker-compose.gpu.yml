@@ -1,0 +1,12 @@
+# GPU override for hosts with an NVIDIA driver and the NVIDIA Container Toolkit.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+
+services:
+  worker:
+    build:
+      args:
+        TORCH_VARIANT: cu126
+        TORCH_INDEX: https://download.pytorch.org/whl/cu126
+    command: ["voiceforge-worker", "--device", "cuda"]
+    gpus: all
